@@ -1,0 +1,2 @@
+average latency for edge addition using linear search is 148.7257200666508
+average latency for edge addition using binary search is 134.3970605055473

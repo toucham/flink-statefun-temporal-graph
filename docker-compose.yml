@@ -1,0 +1,96 @@
+################################################################################
+#  Licensed to the Apache Software Foundation (ASF) under one
+#  or more contributor license agreements.  See the NOTICE file
+#  distributed with this work for additional information
+#  regarding copyright ownership.  The ASF licenses this file
+#  to you under the Apache License, Version 2.0 (the
+#  "License"); you may not use this file except in compliance
+#  with the License.  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+# limitations under the License.
+################################################################################
+version: "3"
+services:
+  ###############################################################
+  #    Functions service
+  ###############################################################
+  graph-analytics-functions:
+    container_name: graph-analytics-functions
+    build:
+      dockerfile: Dockerfile
+      context: .
+    expose:
+      - "1108"
+
+  ###############################################################
+  #    StateFun runtime
+  ###############################################################
+  statefun:
+    container_name: statefun
+    image: mikegzy/cs551-project:1.0
+    ports:
+      - "8081:8081"
+      - "8090:8090"
+      - "8091:8091"
+    depends_on:
+      - graph-analytics-functions
+      - broker
+    volumes:
+      - ./module.yaml:/module.yaml
+
+  ###############################################################
+  #    Apache Kafka (based on https://developer.confluent.io/quickstart/kafka-docker/)
+  ###############################################################
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest.arm64
+    container_name: zookeeper
+    expose:
+      - 2181
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  broker:
+    image: confluentinc/cp-kafka:latest.arm64
+    container_name: broker
+    ports:
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      - "9092:9092"
+    expose:
+      - 29092
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT, EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: EXTERNAL://broker:9092, INTERNAL://broker:29092
+      KAFKA_ADVERTISED_LISTENERS: EXTERNAL://localhost:9092, INTERNAL://broker:29092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+
+  ###############################################################
+  #   Kafka Producer (using the Producer API from Kafka)
+  ###############################################################
+  producer:
+    container_name: producer
+    build:
+      dockerfile: Dockerfile_producer
+      context: .
+    depends_on:
+      - graph-analytics-functions
+      - broker
+      - statefun
+    environment:
+      BROKER_ADDRESS: broker
+      BROKER_ADDRESS_PORT: 29092

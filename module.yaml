@@ -1,0 +1,71 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+kind: io.statefun.endpoints.v2/http
+spec:
+  functions: graph-analytics.fns/*
+  urlPathTemplate: http://graph-analytics-functions:1108/
+  transport:
+    type: io.statefun.transports.v1/async
+    call: 15min
+    connect: 10min
+
+---
+kind: io.statefun.playground.v1/ingress
+spec:
+  port: 8090
+---
+#kind: io.statefun.playground.v1/egress
+#spec:
+#  port: 8091
+#  topics:
+#    - incoming-edges
+#    - outgoing-edges
+#    - add-edge-latency
+#---
+---
+kind: io.statefun.kafka.v1/ingress
+spec:
+  id: graph-analytics.io/filters
+  address: broker:29092
+  consumerGroupId: graph-analytics
+  startupPosition:
+    type: earliest
+  deliverySemantic:
+    type: exactly-once
+    transactionTimeoutMillis: 15min
+  topics:
+    - topic: tasks
+      valueType: graph-analytics.types/execute
+      targets:
+        - graph-analytics.fns/filter
+---
+kind: io.statefun.kafka.v1/egress
+spec:
+  id: graph-analytics.io/egress
+  address: broker:29092
+  consumerGroupId: graph-analytics
+  deliverySemantic:
+    type: at-least-once
+    transactionTimeoutMillis: 15min
+  topics:
+    - incoming-edges
+    - outgoing-edges
+    - out-k-hop-result
+    - out-triangle-result
+    - in-triangle-result
+    - in-k-hop-result
+    - recommendation
+    - time-window
