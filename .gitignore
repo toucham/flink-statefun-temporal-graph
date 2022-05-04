@@ -3,3 +3,4 @@ target/
 latencyTest.txt
 latencyTest_linear.txt
 .vscode/
+.DS_Store
