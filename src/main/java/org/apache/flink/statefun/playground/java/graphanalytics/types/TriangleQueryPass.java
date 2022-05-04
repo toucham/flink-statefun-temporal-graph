@@ -3,6 +3,9 @@ package org.apache.flink.statefun.playground.java.graphanalytics.types;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.ArrayList;
 
+/**
+ * This class is used to trigger the next pass of the triangle search.
+ */
 public class TriangleQueryPass {
     @JsonProperty("vertex_id")
     private int vertexId;

@@ -71,6 +71,13 @@ public class InEdgesQueryFn implements StatefulFunction {
     return context.storage().get(IN_NEIGHBORS).orElse(new ArrayList<CustomTuple2<Integer, Long>>());
   }
 
+  /**
+   * This method performs the first pass of the triangle function.
+   * All the incoming edges the root vertex (A) are forwarded to the next logical instance of InEdgesQueryFn.performTrianglePass (Vertex B).
+   *
+   * @param context
+   * @param trigger
+   */
   private void triggerTriangleQuery(Context context, TriangleQueryTrigger trigger) {
     List<CustomTuple2<Integer, Long>> currentInNeighbors = getCurrentInNeighbors(context);
     ArrayList<Integer> filteredNodes = new ArrayList<Integer>(0);
@@ -101,6 +108,14 @@ public class InEdgesQueryFn implements StatefulFunction {
     }
   }
 
+  /**
+   * This method performs the second pass of the triangle function.
+   * The incoming edges of the root vertex are compared with the incoming edges of the current vertex.
+   * If the incoming edges of the previous (B) vertex are a subset of the incoming edges of the current vertex (C),
+   * then A -> B -> C | A -> C is a triangle.
+   * @param context
+   * @param pass
+   */
   private void performTrianglePass(Context context, TriangleQueryPass pass) {
     List<CustomTuple2<Integer, Long>> currentInNeighbors = getCurrentInNeighbors(context);
     ArrayList<Integer> filteredNodes = new ArrayList<Integer>(0);
@@ -127,6 +142,13 @@ public class InEdgesQueryFn implements StatefulFunction {
     }
   }
 
+  /**
+   * This method performs the k-hop query.
+   * The function performs the query by sending a message to the next logical instance of InEdgesQueryFn.performKHop.
+   *
+   * @param context
+   * @param kHopQuery
+   */
   private void performKHop(Context context, KHopQuery kHopQuery) {
     List<CustomTuple2<Integer, Long>> currentInNeighbors = getCurrentInNeighbors(context);
     List<Integer> filteredNodes = new ArrayList<Integer>(0);

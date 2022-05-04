@@ -3,6 +3,9 @@ import numpy as np
 
 
 def readFileToList(filename):
+	'''
+	Reads the content of a file into a list, each line is a list item
+	'''
 	result = []
 
 	with open(filename, 'r') as f:
@@ -16,6 +19,9 @@ def readFileToList(filename):
 
 
 def plotGraph(result, savefile='ltncy_graph.png'):
+	'''
+	plots latency graph
+	'''
 	x = result[:, 1]
 	y = result[:, 2]
 
@@ -27,6 +33,9 @@ def plotGraph(result, savefile='ltncy_graph.png'):
 
 
 def plotGraphComparison(result_ls, result_bs):
+	'''
+	plots latency comparison graph
+	'''
 	# in case two results have different length
 	endIdx = min(len(result_ls), len(result_bs))
 	endIdx = (endIdx // 1000) * 1000
@@ -51,6 +60,9 @@ def plotGraphComparison(result_ls, result_bs):
 
 
 def plotLatencyCDF(result, savefile='cdf_graph.png'):
+	'''
+	plots latency CDF graph based on latency result
+	'''
 	latency = result[:, 2]
 	sorted_latency = np.sort(latency)
 	sorted_latency = np.insert(sorted_latency, 0, 0)

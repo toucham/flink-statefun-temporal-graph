@@ -1,6 +1,9 @@
 
 
 def createTestFile(filename):
+	'''
+	Creates a mock test file
+	'''
 	timestamp = 1000000000
 	with open(filename, 'w') as f:
 		for i in range(2, 20002):

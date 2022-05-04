@@ -2,6 +2,9 @@ package org.apache.flink.statefun.playground.java.graphanalytics.types;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * THis class is used to trigger the computation of the triangle search.
+ */
 public class TriangleQueryTrigger {
     @JsonProperty("vertex_id")
     private int vertexId;

@@ -3,24 +3,57 @@ This is the source code for project 6.
 
 # Project Structure and file explanations:
 * `src/` contains all the source code, and `src/.../types` contains the types we need (eg. `CustomTuple2` and `Vertex` classes) for the different queries
-* `GraphAnalyticsFilesApp.java` contains code to read from an ingress file rather than requiring us to manually input `CURL` commands from the terminal
+* `src/.../KafkaProducerApp.java` contains code to read from a data file and injects messages to Kafka ingress. This program is run within the `producer` container
 * `src/.../GraphAnalyticsAppServer.java`: contains the `Undertow` server that listens for requests
-* `src/.../InEdgesQueryFn.java`: contains the query code for counting incoming edges
-* `src/.../OutEdgesQueryFn.java`: contains the query code for counting outgoing edges
+* `src/.../InEdgesQueryFn.java`: contains the query code for processing in-edges query, in-k-hop query, and in-triangle query
+* `src/.../OutEdgesQueryFn.java`: contains the query code for processing out-edges query, out-k-hop query, and out-triangle query
 * `src/.../TimeWindowQueryFn.java`: contains the query code for the time window query. See API for more details.
 * `src/.../EventsFilterFn`: contains the code of our main event handler function, which receives all requests and sends each request to the appropriate query function
+* `latencyTest/`: This folder contains the code to generate latency graph and the graphs themselves.
+* `data/`: This folder contains the data files
 
-# Query Functions API
-* `TimeWindowQueryFn`:
+# Query API
+* `Time Window Query`:
     * `execute` task type: `GET_TIME_WINDOW_EDGES`
     * required parameters: `src` for vertex to query on, `t` for starting timestamp, `endTime` for ending timestamp
     * this query outputs all outgoing edges from source node `src` between time `t` and `endTime`
+* `In-Edges Query`:
+  * `execute` task type: `GET_IN_EDGES`
+  * required parameters: `dst` for vertex to query on, `t` for timestamp (currently not used, but required)
+  * this query retrieves all incoming edges of vertex `dst`
+* `Out-Edges Query`:
+  * `execute` task type: `GET_OUT_EDGES`
+  * required parameters: `src` for vertex to query on, `t` for timestamp (currently not used, but required)
+  * this query retrieves all outgoing edges of vertex `src`
+* `IN-K-HOP Query`:
+  * `execute` task type: `IN_K_HOP`
+  * required parameters: `dst` for vertex to query on, `k` for the number of hops
+  * this query retrieves the neighbor that is k hops away from node `dst` by traversing incoming edges
+* `Out-K-HOP Query`:
+  * `execute` task type: `OUT_K_HOP`
+  * required parameters: `src` for vertex to query on, `k` for the number of hops
+  * this query retrieves the neighbor that is k hops away from node `src` by traversing outgoing edges
+* `IN-Triangles Query`
+  * `execute` task type: `IN_TRIANGLES`
+  * required parameters: `dst` for vertex to query on
+  * this query retrieves the nodes within a unidirectional triangle of node `dst` by traversing incoming edges
+* `OUT-Triangles Query`
+  * `execute` task type: `OUT_TRIANGLES`
+  * required parameters: `src` for vertex to query on
+  * this query retrieves the nodes within a unidirectional triangle of node `src` by traversing outgoing edges
+* `Recommendation Query`
+  * `execute` task type: `GET_RECOMMENDATION`
+  * required parameters: `dst` for vertex to query on, `t` for timestamp (currently not used, but required)
+  * this query retrieves the potential recommendation candidates for node `dst` based on outgoing connections of an incoming neighbor of node `dst`
 
 # Build project
 * from the root directory of the source code, run `cd projectCode` to go into the actual source directory (if you are already inside the `projectCode` directory, you can skip this step)
 * run `make` to build and run the stateful functions
 * open `Docker Desktop` and click `graph-analytics` to see messages being sent and received
 * If you prefer reading logs produced by each container in the terminal, run `make kafka-terminal` instead
+
+__Important Note__: The zookeeper and Kafka broker container are using arm64 architecture. If you don't have Docker desktop, you might not be able to run it 
+on your local machine, depending on the architecture of your machine. Try using the amd64 version of these containers.
 
 # Run project
 We currently have two ingresses, one of them takes `HTTP` requests as input events, the other one takes `Kafka` messages as
@@ -93,11 +126,6 @@ Then you can write messages:
 ```
 3|{"task": "ADD", "src": "3", "dst": "4", "t": "1254194656", "k": "0"}
 1|{"task": "ADD", "src": "1", "dst": "4", "t": "1254192988", "k": "0"}
-```
-
-Recommendation query:
-```
-{"task": "recommendation", "src": "1", "dst": "2", "t": "1254194656", "k": "0"}
 ```
 <br>
 
